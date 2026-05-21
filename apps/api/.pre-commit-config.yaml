@@ -1,0 +1,12 @@
+# Pre-commit hooks for the KatACAD API (Python).
+# Install once with:  pre-commit install   (run inside apps/api)
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.14
+    hooks:
+      - id: ruff
+        args: [--fix]
+  - repo: https://github.com/psf/black
+    rev: "26.5.1"
+    hooks:
+      - id: black
