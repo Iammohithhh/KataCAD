@@ -34,3 +34,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# replicad WASM — copied from node_modules by scripts/copy-wasm.mjs at predev/prebuild
+/public/wasm/
