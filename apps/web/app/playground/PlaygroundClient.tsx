@@ -5,6 +5,7 @@
 // it depends on the OpenCascade WASM bundle.
 import { useEffect, useRef, useState } from "react";
 
+import { ReplicadShape } from "@/components/ReplicadShape";
 import { Viewport } from "@/components/Viewport";
 import { useReplicad, type BracketBuild } from "@/lib/hooks/useReplicad";
 import {
@@ -102,7 +103,9 @@ export default function PlaygroundClient() {
         </aside>
 
         <section className="flex-1">
-          <Viewport mesh={build?.mesh ?? null} />
+          <Viewport cameraPosition={[130, 100, 130]}>
+            {build ? <ReplicadShape mesh={build.mesh} /> : null}
+          </Viewport>
         </section>
       </div>
     </main>
