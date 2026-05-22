@@ -1,14 +1,16 @@
 "use client";
 
-// Phase 3 studio — type a prompt or click the gallery; the router picks a
-// Layer 1 hero, the hero is built and animated, and it can be exported.
-// Loaded client-side only (see page.tsx) because of the OpenCascade WASM.
+// Phase 4 studio — prompt or gallery loads a hero; the feature tree shows its
+// scene graph (click to highlight a part); the parameter sliders rebuild it.
+// Client-side only (see page.tsx) because of the OpenCascade WASM.
 import { useEffect, useState } from "react";
 
 import type { HeroId } from "@katacad/shared";
 
+import { FeatureTree } from "@/components/FeatureTree";
 import { HeroGallery } from "@/components/HeroGallery";
 import { HeroScene } from "@/components/HeroScene";
+import { ParameterSliders } from "@/components/ParameterSliders";
 import { PromptInput } from "@/components/PromptInput";
 import { Viewport } from "@/components/Viewport";
 import { routePrompt } from "@/lib/api/route";
@@ -46,6 +48,7 @@ export default function StudioClient() {
   const [request, setRequest] = useState<HeroRequest>({ id: FALLBACK_HERO, params: {} });
   const [hero, setHero] = useState<LoadedHero | null>(null);
   const [routing, setRouting] = useState(false);
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
 
   useEffect(() => {
     if (status !== "ready") return;
@@ -66,6 +69,11 @@ export default function StudioClient() {
     }
   }, [status, request]);
 
+  const loadHero = (id: HeroId, params: HeroParams) => {
+    setSelectedNode(null);
+    setRequest({ id, params });
+  };
+
   const handlePrompt = async (prompt: string) => {
     setRouting(true);
     try {
@@ -74,18 +82,18 @@ export default function StudioClient() {
         result.layer === 1 && result.hero && getHero(result.hero as HeroId)
           ? (result.hero as HeroId)
           : FALLBACK_HERO;
-      setRequest({ id: matched, params: result.params ?? {} });
+      loadHero(matched, result.params ?? {});
     } catch (err) {
-      // Network error or timeout — the visitor still gets a hero, no error UI.
       console.error("Prompt routing failed; loading fallback hero:", err);
-      setRequest({ id: FALLBACK_HERO, params: {} });
+      loadHero(FALLBACK_HERO, {});
     } finally {
       setRouting(false);
     }
   };
 
-  const handleSelect = (id: HeroId) => {
-    setRequest({ id, params: {} });
+  // A slider change keeps the same hero but rebuilds it with new parameters.
+  const handleSliderChange = (key: string, value: number) => {
+    setRequest((current) => ({ id: current.id, params: { ...current.params, [key]: value } }));
   };
 
   const handleExport = (kind: "step" | "stl") => {
@@ -124,20 +132,49 @@ export default function StudioClient() {
         </div>
       </header>
 
-      <section className="flex-1">
-        <Viewport>
-          {hero ? (
-            <HeroScene
-              key={hero.id}
-              model={hero.model}
-              bounds={hero.bounds}
-              animate={(elapsed) => hero.definition.animate(elapsed, hero.params)}
-            />
-          ) : null}
-        </Viewport>
-      </section>
+      <div className="flex flex-1 overflow-hidden">
+        <section className="flex-1">
+          <Viewport orthographic>
+            {hero ? (
+              <HeroScene
+                key={hero.id}
+                model={hero.model}
+                bounds={hero.bounds}
+                animate={(elapsed) => hero.definition.animate(elapsed, hero.params)}
+                selectedNode={selectedNode}
+              />
+            ) : null}
+          </Viewport>
+        </section>
 
-      <HeroGallery activeId={hero?.id ?? null} onSelect={handleSelect} disabled={status !== "ready"} />
+        <aside className="flex w-72 flex-col overflow-hidden border-l">
+          <div className="flex-1 overflow-auto">
+            {hero ? (
+              <FeatureTree
+                root={hero.model.root}
+                selectedNode={selectedNode}
+                onSelectNode={setSelectedNode}
+              />
+            ) : null}
+          </div>
+          <div className="border-t">
+            {hero ? (
+              <ParameterSliders
+                sliders={hero.model.sliders}
+                values={hero.params}
+                onChange={handleSliderChange}
+                disabled={status !== "ready"}
+              />
+            ) : null}
+          </div>
+        </aside>
+      </div>
+
+      <HeroGallery
+        activeId={hero?.id ?? null}
+        onSelect={(id) => loadHero(id, {})}
+        disabled={status !== "ready"}
+      />
     </main>
   );
 }

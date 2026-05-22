@@ -7,7 +7,7 @@
 // useFrame evaluates the hero's animation and writes each node's transform.
 import { useFrame, useThree } from "@react-three/fiber";
 import { useMemo, useRef, type MutableRefObject } from "react";
-import { BufferGeometry, Group, PerspectiveCamera } from "three";
+import { BufferGeometry, Group, OrthographicCamera } from "three";
 
 import { tessellate } from "@/lib/replicad";
 import type { AnimationFrame, HeroBounds, HeroModel, HeroNode, Vec3 } from "@/lib/replicad/heroes";
@@ -42,17 +42,26 @@ function buildRenderTree(source: HeroNode): RenderNode {
   };
 }
 
-function NodeView({ node, groups }: { node: RenderNode; groups: GroupMap }) {
+interface NodeViewProps {
+  node: RenderNode;
+  groups: GroupMap;
+  selectedNode: string | null;
+}
+
+function NodeView({ node, groups, selectedNode }: NodeViewProps) {
   const attach = (group: Group | null): void => {
     if (group) groups.current.set(node.name, group);
     else groups.current.delete(node.name);
   };
 
+  // The selected feature-tree node is rendered in a highlight color.
+  const faceColor = node.name === selectedNode ? "#e0683c" : "#9aa0a6";
+
   return (
     <group ref={attach} position={node.position} rotation={node.rotation}>
       {node.faces ? (
         <mesh geometry={node.faces}>
-          <meshStandardMaterial color="#9aa0a6" metalness={0.15} roughness={0.55} />
+          <meshStandardMaterial color={faceColor} metalness={0.15} roughness={0.55} />
         </mesh>
       ) : null}
       {node.edges ? (
@@ -61,28 +70,42 @@ function NodeView({ node, groups }: { node: RenderNode; groups: GroupMap }) {
         </lineSegments>
       ) : null}
       {node.children.map((child) => (
-        <NodeView key={child.name} node={child} groups={groups} />
+        <NodeView key={child.name} node={child} groups={groups} selectedNode={selectedNode} />
       ))}
     </group>
   );
 }
 
-/** Reframes the camera to fit a hero of the given bounding radius. */
+/**
+ * Frames the orthographic camera to fit a hero of the given bounding radius.
+ * Orthographic projection keeps parts the same size at any depth — the
+ * correct, distortion-free view for a CAD model.
+ */
 function CameraRig({ radius }: { radius: number }) {
-  const camera = useThree((state) => state.camera) as PerspectiveCamera;
+  const camera = useThree((state) => state.camera) as OrthographicCamera;
+  const size = useThree((state) => state.size);
   const controls = useThree((state) => state.controls) as unknown as
     | { target: { set: (x: number, y: number, z: number) => void }; update: () => void }
     | null;
-  const last = useRef<number>(-1);
+  const applied = useRef<string>("");
 
   useFrame(() => {
-    if (last.current === radius) return;
-    last.current = radius;
-    const distance = Math.max(radius, 1) * 1.9;
-    camera.position.set(distance, distance * 0.78, distance);
-    camera.near = Math.max(0.5, radius / 80);
-    camera.far = radius * 60;
+    // Re-fit when the hero (radius) or the canvas size changes.
+    const key = `${radius}:${size.width}x${size.height}`;
+    if (applied.current === key) return;
+    applied.current = key;
+
+    const safeRadius = Math.max(radius, 1);
+    const viewportMin = Math.max(Math.min(size.width, size.height), 1);
+    // Ortho zoom sets apparent size: fit the model diameter with a margin.
+    camera.zoom = viewportMin / (safeRadius * 2.5);
+
+    const distance = safeRadius * 4;
+    camera.position.set(distance, distance * 0.6, distance);
+    camera.near = 1;
+    camera.far = distance * 8;
     camera.updateProjectionMatrix();
+
     if (controls) {
       controls.target.set(0, 0, 0);
       controls.update();
@@ -96,9 +119,11 @@ export interface HeroSceneProps {
   model: HeroModel;
   bounds: HeroBounds;
   animate: (elapsedSeconds: number) => AnimationFrame;
+  /** Name of the feature-tree node to highlight, if any. */
+  selectedNode: string | null;
 }
 
-export function HeroScene({ model, bounds, animate }: HeroSceneProps) {
+export function HeroScene({ model, bounds, animate, selectedNode }: HeroSceneProps) {
   const { tree, rest } = useMemo(() => {
     const built = buildRenderTree(model.root);
     const restMap = new Map<string, { position: Vec3; rotation: Vec3 }>();
@@ -138,7 +163,7 @@ export function HeroScene({ model, bounds, animate }: HeroSceneProps) {
     <>
       <CameraRig radius={radius} />
       <group position={[-bounds.center[0], -bounds.center[1], -bounds.center[2]]}>
-        <NodeView node={tree} groups={groups} />
+        <NodeView node={tree} groups={groups} selectedNode={selectedNode} />
       </group>
     </>
   );
