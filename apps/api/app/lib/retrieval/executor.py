@@ -68,4 +68,4 @@ def semantic_tree(code: str) -> FeatureNode:
     if not children:
         children = [FeatureNode(name="body_0")]
 
-    return FeatureNode(name="retrieved_part", children=children)
+    return FeatureNode(name="generated_part", children=children)

@@ -7,6 +7,7 @@ import { useMemo } from "react";
 import { Vector3 } from "three";
 
 import type { TessellatedShape } from "@/lib/replicad";
+import { VIEWPORT } from "@/lib/theme";
 
 export interface ReplicadShapeProps {
   mesh: TessellatedShape;
@@ -22,11 +23,15 @@ export function ReplicadShape({ mesh }: ReplicadShapeProps) {
 
   return (
     <group position={[-center.x, -center.y, -center.z]}>
-      <mesh geometry={mesh.faces}>
-        <meshStandardMaterial color="#9aa0a6" metalness={0.1} roughness={0.6} />
+      <mesh geometry={mesh.faces} castShadow>
+        <meshStandardMaterial
+          color={VIEWPORT.partColor}
+          metalness={VIEWPORT.partMetalness}
+          roughness={VIEWPORT.partRoughness}
+        />
       </mesh>
       <lineSegments geometry={mesh.edges}>
-        <lineBasicMaterial color="#1a1a1a" />
+        <lineBasicMaterial color={VIEWPORT.edgeColor} transparent opacity={0.55} />
       </lineSegments>
     </group>
   );

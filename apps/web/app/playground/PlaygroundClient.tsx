@@ -1,12 +1,14 @@
 "use client";
 
 // Phase 1 playground — the full code → Replicad → viewport → STEP/STL
-// round-trip on one page. Loaded only on the client (see page.tsx) because
-// it depends on the OpenCascade WASM bundle.
+// round-trip on one page. Loaded only on the client because it depends on
+// the OpenCascade WASM bundle.
 import { useEffect, useRef, useState } from "react";
 
 import { ReplicadShape } from "@/components/ReplicadShape";
 import { Viewport } from "@/components/Viewport";
+import { Wordmark } from "@/components/Wordmark";
+import { Button } from "@/components/ui/Button";
 import { useReplicad, type BracketBuild } from "@/lib/hooks/useReplicad";
 import {
   BRACKET_PARAM_DEFS,
@@ -22,8 +24,8 @@ export default function PlaygroundClient() {
   const [params, setParams] = useState<BracketParams>(DEFAULT_BRACKET_PARAMS);
   const [build, setBuild] = useState<BracketBuild | null>(null);
 
-  // Holds the previously built shape so its OpenCascade memory can be freed
-  // once a newer build has replaced it.
+  // Hold the previous shape so its OpenCascade memory can be freed once a
+  // newer build has replaced it.
   const previousShape = useRef<BracketBuild["shape"] | null>(null);
 
   useEffect(() => {
@@ -46,11 +48,11 @@ export default function PlaygroundClient() {
     }
   }, [status, params, buildPart]);
 
-  const updateParam = (key: keyof BracketParams, value: number) => {
+  const updateParam = (key: keyof BracketParams, value: number): void => {
     setParams((current) => ({ ...current, [key]: value }));
   };
 
-  const handleExport = (kind: "step" | "stl") => {
+  const handleExport = (kind: "step" | "stl"): void => {
     if (!build) return;
     try {
       const blob = kind === "step" ? exportSTEP(build.shape) : exportSTL(build.shape);
@@ -61,23 +63,37 @@ export default function PlaygroundClient() {
   };
 
   return (
-    <main className="flex h-screen flex-col">
-      <header className="border-b p-4">
-        <h1>KatACAD — Phase 1 Playground</h1>
-        <p>A real parametric L-bracket: Replicad B-Rep, rendered in Three.js, exported as STEP/STL.</p>
+    <main className="flex h-screen flex-col bg-surface text-ink">
+      <header className="flex items-center gap-3 border-b border-line px-5 py-3">
+        <Wordmark />
+        <span className="font-mono text-2xs uppercase tracking-[0.18em] text-ink-muted">
+          · Phase 1 Playground
+        </span>
+        <span className="ml-auto font-mono text-2xs uppercase tracking-wider text-ink-faint">
+          Kernel · {status}
+        </span>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-80 overflow-y-auto border-r p-4">
-          <p>Kernel status: {status}</p>
-          {status === "loading" && <p>Loading the CAD kernel (WASM)...</p>}
-          {status === "error" && <p>Failed to load the CAD kernel. See the browser console.</p>}
+        <aside className="w-72 shrink-0 overflow-y-auto border-r border-line bg-surface p-4">
+          {status === "loading" ? (
+            <p className="text-2xs text-ink-muted">Loading the CAD kernel (WASM)…</p>
+          ) : null}
+          {status === "error" ? (
+            <p className="text-2xs text-ink-muted">
+              Failed to load the CAD kernel. See the browser console.
+            </p>
+          ) : null}
 
-          <div className="mt-4 flex flex-col gap-4">
+          <p className="mb-3 font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
+            Parameters · {String(BRACKET_PARAM_DEFS.length).padStart(2, "0")}
+          </p>
+          <div className="flex flex-col gap-3.5">
             {BRACKET_PARAM_DEFS.map((def) => (
-              <label key={def.key} className="flex flex-col">
-                <span>
-                  {def.label}: {params[def.key]}
+              <label key={def.key} className="flex flex-col gap-1.5">
+                <span className="flex items-baseline justify-between gap-3">
+                  <span className="text-2xs text-ink-soft">{def.label}</span>
+                  <span className="font-mono text-2xs text-ink">{params[def.key]}</span>
                 </span>
                 <input
                   type="range"
@@ -93,12 +109,12 @@ export default function PlaygroundClient() {
           </div>
 
           <div className="mt-6 flex flex-col gap-2">
-            <button type="button" onClick={() => handleExport("step")} disabled={!build}>
+            <Button onClick={() => handleExport("step")} disabled={!build}>
               Export STEP
-            </button>
-            <button type="button" onClick={() => handleExport("stl")} disabled={!build}>
+            </Button>
+            <Button onClick={() => handleExport("stl")} disabled={!build}>
               Export STL
-            </button>
+            </Button>
           </div>
         </aside>
 

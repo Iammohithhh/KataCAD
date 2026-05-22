@@ -1,10 +1,11 @@
 "use client";
 
-// The feature tree — renders the current hero's scene graph as a collapsible
-// list of semantic node names. Clicking a node selects it; the viewport
-// highlights the matching part.
+// The feature tree — renders the current part's scene graph as a collapsible
+// list of engineering-nomenclature node identifiers. Clicking a node selects
+// it; the viewport highlights the matching component.
 import { useState } from "react";
 
+import { toEngineeringLabel } from "@/lib/nomenclature";
 import type { HeroNode } from "@/lib/replicad/heroes";
 
 export interface FeatureTreeProps {
@@ -28,23 +29,47 @@ function TreeRow({ node, depth, selectedNode, onSelectNode }: TreeRowProps) {
   return (
     <div>
       <div
-        className="flex items-center gap-1 font-mono text-xs"
-        style={{ paddingLeft: depth * 14 }}
+        className={`group flex items-center gap-1 rounded-sm py-1 pr-2 font-mono text-2xs transition ${
+          isSelected ? "bg-lavender text-royal-deep" : "text-ink-soft hover:bg-paper"
+        }`}
+        style={{ paddingLeft: depth * 13 + 4 }}
       >
         {hasChildren ? (
-          <button type="button" onClick={() => setOpen((v) => !v)} className="w-4">
-            {open ? "▾" : "▸"}
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-label={open ? "Collapse" : "Expand"}
+            className="flex h-4 w-4 items-center justify-center text-ink-faint transition hover:text-ink"
+          >
+            <svg
+              viewBox="0 0 12 12"
+              className={`h-2.5 w-2.5 transition ${open ? "rotate-90" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M4.5 2.5 L8.5 6 L4.5 9.5" />
+            </svg>
           </button>
         ) : (
-          <span className="w-4 text-center">·</span>
+          <span className="flex h-4 w-4 items-center justify-center text-ink-faint">
+            <span className="h-1 w-1 rounded-full bg-current" />
+          </span>
         )}
         <button
           type="button"
           onClick={() => onSelectNode(node.name)}
-          className={isSelected ? "underline" : ""}
+          className="truncate text-left"
         >
-          {node.name}
+          {toEngineeringLabel(node.name)}
         </button>
+        <span className="ml-auto pl-2 tracking-tight">
+          <span className="text-ink-faint">[</span>
+          <span className={isSelected ? "text-azure" : "text-royal"}>●</span>
+          <span className="text-ink-faint">]</span>
+        </span>
       </div>
       {open &&
         node.children.map((child) => (
@@ -62,8 +87,10 @@ function TreeRow({ node, depth, selectedNode, onSelectNode }: TreeRowProps) {
 
 export function FeatureTree({ root, selectedNode, onSelectNode }: FeatureTreeProps) {
   return (
-    <div className="overflow-auto p-2">
-      <p className="mb-1 text-xs font-semibold">Feature Tree</p>
+    <div className="p-3">
+      <p className="mb-2 font-mono text-2xs uppercase tracking-[0.14em] text-ink-faint">
+        Feature Tree
+      </p>
       <TreeRow depth={0} node={root} selectedNode={selectedNode} onSelectNode={onSelectNode} />
     </div>
   );

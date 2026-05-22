@@ -5,12 +5,27 @@
 // Each HeroNode becomes a nested <group>; nesting composes the assembly's
 // transforms. Geometry is tessellated once when the hero loads. A single
 // useFrame evaluates the hero's animation and writes each node's transform.
+import { ContactShadows } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useMemo, useRef, type MutableRefObject } from "react";
-import { BufferGeometry, Group, OrthographicCamera } from "three";
+import { BufferGeometry, Group, OrthographicCamera, Plane, Vector3 } from "three";
 
+import { NO_SECTION, type SectionState } from "@/components/SectionControl";
 import { tessellate } from "@/lib/replicad";
 import type { AnimationFrame, HeroBounds, HeroModel, HeroNode, Vec3 } from "@/lib/replicad/heroes";
+import { VIEWPORT } from "@/lib/theme";
+
+/** Build the world-space clipping planes for the active section, if any. */
+function sectionPlanes(section: SectionState, radius: number): Plane[] {
+  if (!section.axis) return [];
+  const normal =
+    section.axis === "x"
+      ? new Vector3(-1, 0, 0)
+      : section.axis === "y"
+        ? new Vector3(0, -1, 0)
+        : new Vector3(0, 0, -1);
+  return [new Plane(normal, section.offset * radius)];
+}
 
 interface RenderNode {
   name: string;
@@ -46,31 +61,49 @@ interface NodeViewProps {
   node: RenderNode;
   groups: GroupMap;
   selectedNode: string | null;
+  clippingPlanes: Plane[];
 }
 
-function NodeView({ node, groups, selectedNode }: NodeViewProps) {
+function NodeView({ node, groups, selectedNode, clippingPlanes }: NodeViewProps) {
   const attach = (group: Group | null): void => {
     if (group) groups.current.set(node.name, group);
     else groups.current.delete(node.name);
   };
 
-  // The selected feature-tree node is rendered in a highlight color.
-  const faceColor = node.name === selectedNode ? "#e0683c" : "#9aa0a6";
+  // The selected feature-tree node is rendered in the azure accent.
+  const selected = node.name === selectedNode;
 
   return (
     <group ref={attach} position={node.position} rotation={node.rotation}>
       {node.faces ? (
-        <mesh geometry={node.faces}>
-          <meshStandardMaterial color={faceColor} metalness={0.15} roughness={0.55} />
+        <mesh geometry={node.faces} castShadow>
+          <meshStandardMaterial
+            color={selected ? VIEWPORT.selectedColor : VIEWPORT.partColor}
+            metalness={selected ? VIEWPORT.selectedMetalness : VIEWPORT.partMetalness}
+            roughness={selected ? VIEWPORT.selectedRoughness : VIEWPORT.partRoughness}
+            clippingPlanes={clippingPlanes}
+            clipShadows
+          />
         </mesh>
       ) : null}
       {node.edges ? (
         <lineSegments geometry={node.edges}>
-          <lineBasicMaterial color="#1a1a1a" />
+          <lineBasicMaterial
+            color={VIEWPORT.edgeColor}
+            transparent
+            opacity={0.55}
+            clippingPlanes={clippingPlanes}
+          />
         </lineSegments>
       ) : null}
       {node.children.map((child) => (
-        <NodeView key={child.name} node={child} groups={groups} selectedNode={selectedNode} />
+        <NodeView
+          key={child.name}
+          node={child}
+          groups={groups}
+          selectedNode={selectedNode}
+          clippingPlanes={clippingPlanes}
+        />
       ))}
     </group>
   );
@@ -121,9 +154,17 @@ export interface HeroSceneProps {
   animate: (elapsedSeconds: number) => AnimationFrame;
   /** Name of the feature-tree node to highlight, if any. */
   selectedNode: string | null;
+  /** Active section-view clipping state. */
+  section?: SectionState;
 }
 
-export function HeroScene({ model, bounds, animate, selectedNode }: HeroSceneProps) {
+export function HeroScene({
+  model,
+  bounds,
+  animate,
+  selectedNode,
+  section = NO_SECTION,
+}: HeroSceneProps) {
   const { tree, rest } = useMemo(() => {
     const built = buildRenderTree(model.root);
     const restMap = new Map<string, { position: Vec3; rotation: Vec3 }>();
@@ -158,12 +199,33 @@ export function HeroScene({ model, bounds, animate, selectedNode }: HeroScenePro
   });
 
   const radius = Math.max(bounds.size[0], bounds.size[1], bounds.size[2], 1) / 2;
+  // The model is centred at the origin, so its base sits half a height down.
+  const groundY = -bounds.size[1] / 2 - radius * 0.04;
+  const clippingPlanes = useMemo(
+    () => sectionPlanes(section, radius),
+    [section, radius],
+  );
 
   return (
     <>
       <CameraRig radius={radius} />
+      {/* Soft cinematic ground shadow, on the screen-horizontal plane. */}
+      <ContactShadows
+        position={[0, groundY, 0]}
+        scale={radius * 3.4}
+        far={radius * 2.8}
+        blur={2.8}
+        opacity={0.42}
+        resolution={512}
+        color={VIEWPORT.shadowColor}
+      />
       <group position={[-bounds.center[0], -bounds.center[1], -bounds.center[2]]}>
-        <NodeView node={tree} groups={groups} selectedNode={selectedNode} />
+        <NodeView
+          node={tree}
+          groups={groups}
+          selectedNode={selectedNode}
+          clippingPlanes={clippingPlanes}
+        />
       </group>
     </>
   );

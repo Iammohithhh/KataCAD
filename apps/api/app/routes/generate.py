@@ -74,8 +74,8 @@ def generate_layer3(request: Layer3Request) -> GenerateResponse:
         return GenerateResponse(
             step_b64=step_b64,
             metadata=ArchetypeMetadata(
-                archetype="retrieved",
-                label="Retrieved Part",
+                archetype="generated",
+                label="Generated Part",
                 semantic_tree=semantic_tree(part["cadquery"]),
                 sliders=[SliderDef(key="scale", label="Scale", min=0.3, max=3.0, step=0.1)],
                 bounding_box=box,

@@ -33,7 +33,7 @@ def test_executor_round_trip() -> None:
     assert max(box.xlen, box.ylen, box.zlen) == pytest.approx(150.0, rel=0.01)
 
     tree = semantic_tree(code)
-    assert tree.name == "retrieved_part"
+    assert tree.name == "generated_part"
     assert len(tree.children) >= 1
 
 
@@ -46,5 +46,5 @@ def test_layer3_endpoint_returns_step() -> None:
     data = response.json()
     step = base64.b64decode(data["step_b64"])
     assert step[:13] == b"ISO-10303-21;"
-    assert data["metadata"]["archetype"] == "retrieved"
+    assert data["metadata"]["archetype"] == "generated"
     assert len(data["metadata"]["bounding_box"]) == 3

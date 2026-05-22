@@ -212,7 +212,7 @@ One concern per commit. If a single change touches both `web` and `api`, that's 
 
 ## 8. Hard rules — do not violate without explicit user instruction
 
-1. **Do not beautify the frontend before Phase 9.** Use Tailwind defaults: white background, black text, system font, no custom colors, no transitions, no animations. The visual identity (ultramarine + white, refined typography, cinematic lighting) is applied in one cohesive pass at Phase 9. Beautifying early creates inconsistency and rework.
+1. **Do not beautify the frontend before Phase 9.** Use Tailwind defaults: white background, black text, system font, no custom colors, no transitions, no animations. The visual identity (Royal Blue + white, refined typography, cinematic lighting) is applied in one cohesive pass at Phase 9. Beautifying early creates inconsistency and rework.
 2. **Do not add features outside the current phase's scope.** Every phase has a tight deliverables list. If you find yourself building something not in the list, stop and ask.
 3. **Do not skip verification checklists.** Each phase ends with a checklist. If any item fails, fix it before declaring the phase complete.
 4. **Do not commit secrets.** `OPENAI_API_KEY` and any other secrets live in `.env` (gitignored) and are documented in `.env.example` as empty placeholders.
@@ -227,7 +227,7 @@ One concern per commit. If a single change touches both `web` and `api`, that's 
 
 ## 9. Frontend aesthetic policy
 
-The demo's visual identity is **ultramarine blue and white, sleek, clean, elegant, minimal**. This is applied **only in Phase 9**, after all functional phases are complete and the dress rehearsal passes.
+The demo's visual identity is **Royal Blue and white, sleek, clean, elegant, minimal**. This is applied **only in Phase 9**, after all functional phases are complete and the dress rehearsal passes.
 
 **Phases 0 through 8:**
 - Tailwind defaults only.
@@ -239,7 +239,7 @@ The demo's visual identity is **ultramarine blue and white, sleek, clean, elegan
 - Focus exclusively on the demo working correctly. Looks come later.
 
 **Phase 9 (and only Phase 9):**
-- Define design tokens in `tailwind.config.ts`: ultramarine accent (working value `#1F3DCC`, refined live), white surface, near-black ink, optional warm callout accent.
+- Define design tokens in `tailwind.config.ts`: Royal Blue accent `#0056FF` with Azure `#2277FF` as the bright/hover and 3D selection highlight, Soft Lavender `#E3E7FC` tint, white surface, near-black ink. (Earlier docs referenced an ultramarine working value of `#1F3DCC`; superseded.)
 - Pick one UI font (refined sans like Geist or Söhne-equivalent) and JetBrains Mono for technical data. Document the choice.
 - Apply the cinematic viewport lighting (three-point, soft ground shadow, subtle bloom).
 - Apply the full dossier typography pass (blueprint-style dimension lines, 11pt body, A3 title block).
@@ -279,7 +279,7 @@ These are out of scope for the demo. Do not implement them even if they seem eas
 | 6 | Layer 3 retrieval (GenCAD-Code) | ~4h | Yes |
 | 7 | Verify panel and Dossier | ~4h | Yes (parallel internally) |
 | 8 | Hardening, fallback, dress rehearsal | ~3h | Yes |
-| 9 | Beautification (ultramarine + white) | ~3–4h | Yes |
+| 9 | Beautification (Royal Blue + white) | ~3–4h | Yes |
 
 Total: ~32–35 hours across two people over two days. Each phase has its own `docs/PHASE_N_*.md` written just before the phase begins.
 
