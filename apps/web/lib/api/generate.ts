@@ -1,32 +1,42 @@
-// Client for the Layer 2 archetype generator (POST /api/generate/layer2).
-import type { GenerateRequest, GenerateResponse } from "@katacad/shared";
+// Client for the part generators — Layer 2 (archetype) and Layer 3 (retrieval).
+import type { GenerateRequest, GenerateResponse, Layer3Request } from "@katacad/shared";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-// CadQuery generation plus STEP export takes longer than a router call;
-// allow a generous ceiling before giving up.
-const GENERATE_TIMEOUT_MS = 9000;
+// CadQuery generation takes longer than a router call. Layer 3's first call
+// also loads the CLIP model server-side, so it gets a more generous ceiling.
+const LAYER2_TIMEOUT_MS = 9000;
+const LAYER3_TIMEOUT_MS = 20000;
 
-/**
- * Generate a Layer 2 archetype. Rejects on network error, a non-2xx response,
- * or a timeout — the caller is expected to fall back.
- */
-export async function generateLayer2(request: GenerateRequest): Promise<GenerateResponse> {
+async function postGenerate(
+  path: string,
+  body: unknown,
+  timeoutMs: number,
+): Promise<GenerateResponse> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), GENERATE_TIMEOUT_MS);
-
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(`${API_URL}/api/generate/layer2`, {
+    const res = await fetch(`${API_URL}${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
+      body: JSON.stringify(body),
       signal: controller.signal,
     });
     if (!res.ok) {
-      throw new Error(`Layer 2 generation failed: ${res.status}`);
+      throw new Error(`Generation failed: ${res.status}`);
     }
     return (await res.json()) as GenerateResponse;
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** Generate a Layer 2 archetype (bracket, flange, …). */
+export function generateLayer2(request: GenerateRequest): Promise<GenerateResponse> {
+  return postGenerate("/api/generate/layer2", request, LAYER2_TIMEOUT_MS);
+}
+
+/** Retrieve and re-execute a Layer 3 part for an exotic prompt. */
+export function generateLayer3(request: Layer3Request): Promise<GenerateResponse> {
+  return postGenerate("/api/generate/layer3", request, LAYER3_TIMEOUT_MS);
 }

@@ -11,7 +11,8 @@
     "lint": "next lint",
     "fixture": "tsx scripts/generate-fixture.mts",
     "heroes": "tsx scripts/check-heroes.mts",
-    "check-import": "tsx scripts/check-import.mts"
+    "check-import": "tsx scripts/check-import.mts",
+    "check-projection": "tsx scripts/check-projection.mts"
   },
   "dependencies": {
     "@katacad/shared": "workspace:^",
@@ -23,7 +24,8 @@
     "replicad": "^0.23.1",
     "replicad-opencascadejs": "^0.23.0",
     "replicad-threejs-helper": "^0.23.0",
-    "three": "^0.169.0"
+    "three": "^0.169.0",
+    "zustand": "^5.0.13"
   },
   "devDependencies": {
     "@types/node": "^20",

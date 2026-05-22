@@ -7,3 +7,6 @@
 *.stl filter=lfs diff=lfs merge=lfs -text
 *.glb filter=lfs diff=lfs merge=lfs -text
 *.3mf filter=lfs diff=lfs merge=lfs -text
+
+# Git LFS for the Layer 3 retrieval index binary
+*.faiss filter=lfs diff=lfs merge=lfs -text

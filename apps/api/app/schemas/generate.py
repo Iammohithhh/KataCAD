@@ -37,6 +37,13 @@ class GenerateRequest(BaseModel):
     params: dict[str, float] = Field(default_factory=dict)
 
 
+class Layer3Request(BaseModel):
+    """A request to retrieve a Layer 3 part for a prompt."""
+
+    prompt: str
+    params: dict[str, float] = Field(default_factory=dict)
+
+
 class GenerateResponse(BaseModel):
     """A generated archetype: a base64 STEP file plus its metadata."""
 

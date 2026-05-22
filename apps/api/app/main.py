@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import echo, generate, health, route
+from app.routes import dossier, echo, generate, health, route
 
 app = FastAPI(
     title="KatACAD API",
@@ -21,3 +21,4 @@ app.include_router(health.router)
 app.include_router(echo.router, prefix="/api")
 app.include_router(route.router, prefix="/api")
 app.include_router(generate.router, prefix="/api")
+app.include_router(dossier.router, prefix="/api")

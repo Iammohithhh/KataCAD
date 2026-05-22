@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* The dossier prints to an A3 sheet. */
+@media print {
+  @page {
+    size: A3;
+    margin: 12mm;
+  }
+}
