@@ -27,8 +27,31 @@ each hero are listed after it:
 - "nema-mount"   — NEMA stepper-motor mount bracket
 
 LAYER 2 — programmatic archetypes. If the prompt describes a generic mechanical
-part from this list, set "layer" to 2 and "archetype" to the name (lowercase):
-bracket, flange, plate, shaft, gear, housing, pulley, hub, manifold, clamp
+part from this list, set "layer" to 2 and "archetype" to the name (lowercase).
+Parameter names usable for each archetype are listed after it:
+- "bracket"  — L-bracket, angle bracket.
+               params: length, height, width, thickness, hole_diameter
+- "flange"   — bolted flange, pipe flange.
+               params: outer_diameter, bore_diameter, thickness, bolt_count,
+               bolt_circle, bolt_diameter
+- "plate"    — mounting plate, base plate.
+               params: length, width, thickness, hole_diameter, corner_inset
+- "shaft"    — shaft, stepped shaft, axle.
+               params: diameter, length, step_diameter, step_length
+- "gear"     — spur gear, plain gear (NOT a gearbox).
+               params: teeth, module, thickness, bore_diameter
+- "housing"  — housing, enclosure, casing.
+               params: length, width, height, wall_thickness, bore_diameter
+- "pulley"   — pulley, sheave, V-belt pulley.
+               params: outer_diameter, width, bore_diameter, groove_depth
+- "hub"      — wheel hub, flanged hub.
+               params: flange_diameter, hub_diameter, length, bore_diameter,
+               bolt_count
+- "manifold" — manifold block, hydraulic manifold.
+               params: length, width, height, main_bore, port_diameter,
+               port_count
+- "clamp"    — split-ring clamp, pipe clamp.
+               params: inner_diameter, wall_thickness, width, bolt_diameter
 
 LAYER 3 — anything else. If it is a mechanical part that fits neither list
 above, set "layer" to 3 with "hero" and "archetype" both null.
@@ -43,7 +66,9 @@ Examples:
 "planetary gearbox with three planets" -> {"layer":1,"hero":"gearbox","archetype":null,"params":{"planetCount":3}}
 "a robotic gripper for a 50mm cylinder" -> {"layer":1,"hero":"gripper","archetype":null,"params":{"palmRadius":25}}
 "six-axis arm" -> {"layer":1,"hero":"robot-arm","archetype":null,"params":{}}
-"flange with ten holes, 80 mm bolt circle" -> {"layer":2,"hero":null,"archetype":"flange","params":{"holeCount":10,"boltCircle":80}}
+"flange with ten holes, 80 mm bolt circle, 6 mm thick" -> {"layer":2,"hero":null,"archetype":"flange","params":{"bolt_count":10,"bolt_circle":80,"thickness":6}}
+"a gear with 24 teeth" -> {"layer":2,"hero":null,"archetype":"gear","params":{"teeth":24}}
+"a manifold with six ports" -> {"layer":2,"hero":null,"archetype":"manifold","params":{"port_count":6}}
 "a turbine blade" -> {"layer":3,"hero":null,"archetype":null,"params":{}}
 
 Respond with only the JSON object.

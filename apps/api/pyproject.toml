@@ -2,13 +2,16 @@
 name = "katacad-api"
 version = "0.1.0"
 description = "KatACAD demo backend"
-requires-python = ">=3.11"
+# Upper bound: CadQuery's OpenCascade binding (cadquery-ocp) ships no
+# Python 3.14 wheel yet. Build the venv with Python 3.10-3.13.
+requires-python = ">=3.11,<3.14"
 dependencies = [
   "fastapi>=0.110.0",
   "uvicorn[standard]>=0.27.0",
   "pydantic>=2.6.0",
   "python-dotenv>=1.0.0",
   "openai>=1.55.0",
+  "cadquery>=2.7.0",
 ]
 
 [project.optional-dependencies]
