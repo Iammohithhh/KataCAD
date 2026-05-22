@@ -1,15 +1,17 @@
 "use client";
 
-// Phase 2 studio — load any of the three Layer 1 heroes from the gallery,
-// watch it animate, and export it as a STEP/STL assembly. Loaded client-side
-// only (see page.tsx) because it depends on the OpenCascade WASM bundle.
+// Phase 3 studio — type a prompt or click the gallery; the router picks a
+// Layer 1 hero, the hero is built and animated, and it can be exported.
+// Loaded client-side only (see page.tsx) because of the OpenCascade WASM.
 import { useEffect, useState } from "react";
 
 import type { HeroId } from "@katacad/shared";
 
 import { HeroGallery } from "@/components/HeroGallery";
 import { HeroScene } from "@/components/HeroScene";
+import { PromptInput } from "@/components/PromptInput";
 import { Viewport } from "@/components/Viewport";
+import { routePrompt } from "@/lib/api/route";
 import { useReplicad } from "@/lib/hooks/useReplicad";
 import { downloadBlob } from "@/lib/replicad";
 import {
@@ -22,6 +24,14 @@ import {
   type HeroParams,
 } from "@/lib/replicad/heroes";
 
+// Loaded whenever a prompt is unclassifiable or the router is unreachable.
+const FALLBACK_HERO: HeroId = "gearbox";
+
+interface HeroRequest {
+  id: HeroId;
+  params: HeroParams;
+}
+
 interface LoadedHero {
   id: HeroId;
   definition: HeroDefinition;
@@ -33,27 +43,50 @@ interface LoadedHero {
 
 export default function StudioClient() {
   const { status } = useReplicad();
-  const [activeId, setActiveId] = useState<HeroId>("gearbox");
+  const [request, setRequest] = useState<HeroRequest>({ id: FALLBACK_HERO, params: {} });
   const [hero, setHero] = useState<LoadedHero | null>(null);
+  const [routing, setRouting] = useState(false);
 
   useEffect(() => {
     if (status !== "ready") return;
 
-    const definition = getHero(activeId);
+    const definition = getHero(request.id);
     if (!definition) {
-      console.error(`No hero definition registered for "${activeId}".`);
+      console.error(`No hero definition registered for "${request.id}".`);
       return;
     }
 
     try {
-      const params = definition.defaultParams;
+      const params: HeroParams = { ...definition.defaultParams, ...request.params };
       const model = definition.build(params);
       const { compound, bounds } = assembleHero(model);
-      setHero({ id: activeId, definition, model, bounds, compound, params });
+      setHero({ id: request.id, definition, model, bounds, compound, params });
     } catch (err) {
-      console.error(`Failed to build hero "${activeId}":`, err);
+      console.error(`Failed to build hero "${request.id}":`, err);
     }
-  }, [status, activeId]);
+  }, [status, request]);
+
+  const handlePrompt = async (prompt: string) => {
+    setRouting(true);
+    try {
+      const result = await routePrompt(prompt);
+      const matched =
+        result.layer === 1 && result.hero && getHero(result.hero as HeroId)
+          ? (result.hero as HeroId)
+          : FALLBACK_HERO;
+      setRequest({ id: matched, params: result.params ?? {} });
+    } catch (err) {
+      // Network error or timeout — the visitor still gets a hero, no error UI.
+      console.error("Prompt routing failed; loading fallback hero:", err);
+      setRequest({ id: FALLBACK_HERO, params: {} });
+    } finally {
+      setRouting(false);
+    }
+  };
+
+  const handleSelect = (id: HeroId) => {
+    setRequest({ id, params: {} });
+  };
 
   const handleExport = (kind: "step" | "stl") => {
     if (!hero) return;
@@ -69,11 +102,18 @@ export default function StudioClient() {
     <main className="flex h-screen flex-col">
       <header className="border-b p-4">
         <h1>KatACAD — Studio</h1>
-        <p>Layer 1 heroes: real parametric Replicad assemblies with looping mechanism animation.</p>
-        <p>
+        <p>Describe a part in plain English, or pick a hero from the gallery below.</p>
+
+        <div className="mt-2">
+          <PromptInput onSubmit={handlePrompt} loading={routing} disabled={status !== "ready"} />
+        </div>
+
+        <p className="mt-2">
           Kernel status: {status}
+          {routing ? " — routing prompt..." : ""}
           {hero ? ` — showing ${hero.definition.label}` : ""}
         </p>
+
         <div className="mt-2 flex gap-2">
           <button type="button" onClick={() => handleExport("step")} disabled={!hero}>
             Export STEP
@@ -97,7 +137,7 @@ export default function StudioClient() {
         </Viewport>
       </section>
 
-      <HeroGallery activeId={hero?.id ?? null} onSelect={setActiveId} disabled={status !== "ready"} />
+      <HeroGallery activeId={hero?.id ?? null} onSelect={handleSelect} disabled={status !== "ready"} />
     </main>
   );
 }
