@@ -10,7 +10,8 @@
     "start": "next start",
     "lint": "next lint",
     "fixture": "tsx scripts/generate-fixture.mts",
-    "heroes": "tsx scripts/check-heroes.mts"
+    "heroes": "tsx scripts/check-heroes.mts",
+    "check-import": "tsx scripts/check-import.mts"
   },
   "dependencies": {
     "@katacad/shared": "workspace:^",

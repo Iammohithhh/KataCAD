@@ -16,3 +16,4 @@ export {
   type HeroGalleryEntry,
 } from "./registry";
 export { assembleHero, type AssembledHero, type HeroBounds } from "./flatten";
+export { loadArchetype, type LoadedArchetype } from "./archetype";
