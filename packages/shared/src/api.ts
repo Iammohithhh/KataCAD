@@ -32,3 +32,39 @@ export interface RouteResponse {
   /** Where the classification came from. */
   source: "openai" | "cache" | "fallback";
 }
+
+/** A request to generate a Layer 2 archetype. */
+export interface GenerateRequest {
+  archetype: string;
+  params: Record<string, number>;
+}
+
+/** A node in an archetype's semantic feature tree. */
+export interface ArchetypeFeatureNode {
+  name: string;
+  children: ArchetypeFeatureNode[];
+}
+
+/** A parameter-slider definition for an archetype. */
+export interface ArchetypeSlider {
+  key: string;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+}
+
+/** Metadata describing a generated archetype. */
+export interface ArchetypeMetadata {
+  archetype: string;
+  label: string;
+  semantic_tree: ArchetypeFeatureNode;
+  sliders: ArchetypeSlider[];
+  bounding_box: [number, number, number];
+}
+
+/** A generated Layer 2 archetype: a base64 STEP file plus its metadata. */
+export interface GenerateResponse {
+  step_b64: string;
+  metadata: ArchetypeMetadata;
+}
